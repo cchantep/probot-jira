@@ -1,0 +1,5 @@
+.env*
+lib
+node_modules
+package-lock.json
+junit.xml

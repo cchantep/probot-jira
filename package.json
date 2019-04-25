@@ -1,0 +1,50 @@
+{
+  "name": "pr-jira",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "Probot app that check consistency between pull requests and JIRA issues",
+  "author": "Cédric Chantepie (https://github.com/cchantep)",
+  "license": "ISC",
+  "repository": "https://github.com/zengularity/probot-pr-jira.git",
+  "homepage": "https://github.com/zengularity/probot-pr-jira",
+  "bugs": "https://github.com/zengularity/probot-pr-jira/issues",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "nodemon --exec \"npm start\"",
+    "prettier": "prettier \"{src,test}/*.{js,json,md,prettierrc,ts,tsx,yml}\"",
+    "prettier:check": "npm run prettier -- --check",
+    "prettier:write": "npm run prettier -- --write",
+    "start": "probot run ./lib/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch --notify --notifyMode=change --coverage"
+  },
+  "dependencies": {
+    "probot": "^7.2.0",
+    "io-ts": "^1.8.5",
+    "axios": "^0.18.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.0",
+    "@types/node": "^11.9.0",
+    "eslint-plugin-typescript": "^0.14.0",
+    "jest": "^24.0.0",
+    "nodemon": "^1.17.2",
+    "nock": "^10.0.0",
+    "@types/nock": "^9.3.0",
+    "smee-client": "^1.0.2",
+    "ts-jest": "^24.0.0",
+    "typescript": "^3.3.1",
+    "typescript-eslint-parser": "^22.0.0",
+    "prettier": "1.16.4"
+  },
+  "engines": {
+    "node": ">= 8.3.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}
