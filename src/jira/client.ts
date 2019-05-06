@@ -4,8 +4,8 @@ import * as t from 'io-ts'
 
 import axios from 'axios'
 
-import { fromEither } from './util'
-import { Hook, IHook, HookSettings, IHookSettings, Issue, IIssue } from './model/jira'
+import { fromEither } from '../util'
+import { Hook, IHook, HookSettings, IHookSettings, Issue, IIssue } from '../model/jira'
 
 export type Credentials = {
   domain: string

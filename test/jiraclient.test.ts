@@ -1,6 +1,6 @@
 import nock from 'nock'
 
-import * as j from '../src/jiraclient'
+import * as j from '../src/jira/client'
 import { HookSettings } from '../src/model/jira'
 
 // Fixtures

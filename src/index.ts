@@ -3,18 +3,15 @@ import * as either from 'fp-ts/lib/Either'
 
 import * as t from 'io-ts'
 
-import { GitHubAPI } from 'probot/lib/github'
-import { LoggerWithTarget } from 'probot/lib/wrap-logger'
 import { Application, Context } from 'probot'
-
-import { createWebhookProxy } from 'probot/lib/webhook-proxy'
 
 import { fromEither } from './util'
 
 import * as c from './config'
-import * as j from './jiraclient'
+import * as jira from './jira/integration'
+import * as j from './jira/client'
 
-import { IHookSettings, IIssue } from './model/jira'
+import { IIssue } from './model/jira'
 import { PullRequestEvent, PullRequestInfo, IPullRequestInfo } from './model/pullrequest'
 import { ReposListStatusesForRefResponseItem } from '@octokit/rest'
 
@@ -30,114 +27,7 @@ const IssueInfo = t.exact(
   }),
 )
 
-type InstallRepo = { owner: string; repo: string }
-
-type InstallContext = {
-  id: string
-  logger: LoggerWithTarget
-  github: GitHubAPI
-  jiraWebhookUrl: string
-}
-
 export = (app: Application) => {
-  // Installation registry cache
-  const installations: { [id: number]: ReadonlyArray<InstallRepo> } = {}
-
-  installations[881510] = [
-    {
-      owner: 'cchantep',
-      repo: 'mal',
-    },
-  ]
-
-  setupJiraRouting(app)
-
-  jiraWebhookUrl(app.log)
-    .then(jiraHookUrl => {
-      return app
-        .auth()
-        .then(api => {
-          return api.apps.listInstallations({}).then(r => {
-            return r.data.forEach(i => {
-              return app
-                .auth(i.id)
-                .then(a =>
-                  onInstallation({
-                    logger: app.log,
-                    github: a,
-                    id: i.id.toString(),
-                    jiraWebhookUrl: jiraHookUrl,
-                  }),
-                )
-                .then(repos => {
-                  installations[i.id] = repos
-
-                  return void 0
-                })
-            })
-          })
-        })
-        .then(_r => jiraHookUrl)
-    })
-    .then(jiraHookUrl => {
-      return app.on('installation.created', async context => {
-        const repos = await context.github.apps.listRepos({})
-        const created = context.payload.installation
-
-        return await onInstallation({
-          logger: context.log,
-          github: context.github,
-          id: created.id,
-          jiraWebhookUrl: jiraHookUrl,
-        }).then(repos => {
-          installations[created.id] = repos
-
-          return void 0
-        })
-      })
-    })
-
-  app.on('installation.deleted', async context => {
-    const deleted = context.payload.installation
-
-    context.log(`Installation ${deleted.id} deleted`)
-
-    const repos = installations[deleted.id]
-
-    if (!repos) {
-      return context.log(`No repostory found for deleted installation ${deleted.id}`)
-    }
-
-    // ---
-
-    repos.forEach(async r => {
-      const { owner, repo } = r
-
-      context.log(`Cleaning JIRA hooks for repository '${owner}/${repo}'`)
-
-      const credentials = await jiraCredentials(owner, repo)
-      const hooks = await j.getHooks(credentials)
-
-      context.log.debug('JIRA hooks', hooks)
-
-      const installedHook = hooks.find(h => h.name == `pr-jira-${deleted.id}`)
-
-      if (!installedHook) {
-        return context.log(`No JIRA hook is matching installation ${deleted.id} for repository '${owner}/${repo}'`)
-      }
-
-      // ---
-
-      context.log(`JIRA hook found for deleted installation ${deleted.id}`, installedHook)
-
-      return await j.unregisterHook(credentials, installedHook.self)
-    })
-
-    delete installations[deleted.id]
-  })
-
-  // ---
-
   app.on(
     ['pull_request.opened', 'pull_request.edited', 'pull_request.synchronize', 'pull_request.reopened'],
     async context => {
@@ -164,7 +54,7 @@ export = (app: Application) => {
     context.log(`Pull request #${prNumber} is merged at ${event.merged_at}`)
 
     const repoInfo = context.repo({})
-    const pr = await context.github.pullRequests
+    const pr = await context.github.pulls
       .get({
         ...repoInfo,
         number: prNumber,
@@ -175,7 +65,7 @@ export = (app: Application) => {
 
     const postMergeCheck: () => Promise<void> = async () => {
       const config = await c.getConfig(context, pr.base.ref)
-      const credentials = await jiraCredentials(repoInfo.owner, repoInfo.repo)
+      const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
       return await withJiraIssue(context, pr, config, data => {
         const [issue, url] = data
@@ -188,9 +78,7 @@ export = (app: Application) => {
           )
         } else {
           const details = config.postMergeStatus.join(', ')
-          const msg = `JIRA issue [${
-            issue.key
-          }](${url}) doesn't seem to have a valid status: '${jiraStatus}' !~ [${details}]`
+          const msg = `JIRA issue [${issue.key}](${url}) doesn't seem to have a valid status: '${jiraStatus}' !~ [${details}]`
 
           context.log(`${msg} (pull request #${prNumber})`)
 
@@ -226,145 +114,9 @@ export = (app: Application) => {
       })
     }),
   )
-}
 
-async function setupJiraRouting(app: Application): Promise<void> {
-  // Routing
-  const jiraRoutes = app.route('/jira')
-  const express = require('express')
-
-  jiraRoutes.use(express.json())
-
-  // TODO
-  jiraRoutes.post('/hook*', async (req: any, res: any) => {
-    app.log('Request', req.query)
-
-    const param: string | undefined = req.query['installation_id']
-
-    if (!param) {
-      app.log('Invalid parameter on JIRA hook', param)
-      return res.sendStatus(400)
-    }
-
-    const installId: number = parseInt(param, 10)
-
-    if (isNaN(installId)) {
-      app.log('Invalid installation ID on JIRA hook', installId)
-      return res.sendStatus(400)
-    }
-
-    // ---
-
-    app.log(`Received request on JIRA hook for installation ${installId}`)
-
-    app.log('BODY', req.body)
-
-    await app.auth(installId).then(authed => {
-      authed.apps.listRepos({}).then(r => {
-        app.log('REPOS', r.data.repositories)
-
-        res.end('Hello')
-      })
-    })
-  })
-}
-
-async function jiraWebhookUrl(logger: LoggerWithTarget): Promise<string> {
-  const smeeKey = 'JIRA_WEBHOOK_PROXY_URL'
-
-  // Proxy
-  const createJiraChannel: () => Promise<string> = () => {
-    logger('Setup smee.io channel for JIRA webhook')
-
-    const smee = require('smee-client')
-
-    return smee.createChannel().then((res: any) => {
-      const url = res.toString()
-
-      logger(`Save ${url} in .env as ${smeeKey}`)
-
-      return url
-    })
-  }
-
-  const jiraHookUrl = await Promise.resolve(process.env[smeeKey]).then(configured => configured || createJiraChannel())
-
-  if (jiraHookUrl.substring(0, 15) == 'https://smee.io') {
-    logger(`Create webhook proxy for JIRA/smee.io channel of ${jiraHookUrl}`)
-
-    const port: number = parseInt(process.env['PORT'] || '3000', 10)
-
-    createWebhookProxy({
-      logger,
-      port,
-      path: '/jira/hook',
-      url: jiraHookUrl,
-    })
-  }
-
-  return jiraHookUrl
-}
-
-function onInstallation(ctx: InstallContext): Promise<ReadonlyArray<InstallRepo>> {
-  const { logger, id, github, jiraWebhookUrl } = ctx
-
-  const go: (input: Array<InstallRepo>, out: Array<InstallRepo>) => Promise<ReadonlyArray<InstallRepo>> = async (
-    input: Array<InstallRepo>,
-    out: Array<InstallRepo>,
-  ) => {
-    if (input.length == 0) {
-      return Promise.resolve(out)
-    }
-
-    // ---
-
-    const repoInfo = input[0]
-    const tail = input.slice(1)
-
-    const prefix = `${repoInfo.owner}_${repoInfo.repo}`.toUpperCase()
-    const credentials = await jiraCredentials(repoInfo.owner, repoInfo.repo)
-    const hooks = await j.getHooks(credentials)
-    const name = `pr-jira-${id}`
-    const appHook = hooks.find(h => h.name == name)
-
-    if (!!appHook) {
-      logger(`JIRA hook already exists for installation ${id}`)
-      return go(tail, out)
-    }
-
-    // ---
-
-    const jiraProject = process.env[`${prefix}_JIRA_PROJECT_NAME`] || process.env['JIRA_PROJECT_NAME']
-
-    logger.debug('jiraProject', jiraProject)
-
-    const newHook: IHookSettings = {
-      name,
-      url: jiraWebhookUrl,
-      enabled: true,
-      events: ['jira:issue_updated', 'jira:issue_deleted'],
-      filters: {
-        'issue-related-events-section': `project = "${jiraProject}"`,
-      },
-    }
-
-    logger('Register JIRA hook', newHook)
-
-    return j.registerHook(credentials, newHook).then(_r => go(tail, out.concat(repoInfo)))
-  }
-
-  return github.apps.listRepos({}).then(r => {
-    return go(
-      r.data.repositories.map(repo => {
-        const repoInfo: InstallRepo = {
-          owner: repo.owner.login,
-          repo: repo.name,
-        }
-
-        return repoInfo
-      }),
-      [],
-    )
+  app.on('schedule.repository', async context => {
+    context.log('Scheduled')
   })
 }
 
@@ -377,7 +129,7 @@ async function withIssuePR(context: Context, f: (pr: IPullRequestInfo) => Promis
   if (!event.pull_request) {
     context.log(`Not a pull request issue: #${event.id}`)
   } else {
-    const resp = await context.github.pullRequests.get(
+    const resp = await context.github.pulls.get(
       context.repo({
         number: issue.number,
       }),
@@ -431,9 +183,7 @@ async function mainHandler(context: Context, pr: IPullRequestInfo): Promise<void
         issue.fields.fixVersions.length == 0 ? '<none>' : issue.fields.fixVersions.map(v => v.name).join(', ')
 
       context.log(
-        `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${milestone.title}' of pull request #${
-          pr.number
-        }: ${details}`,
+        `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${milestone.title}' of pull request #${pr.number}: ${details}`,
       )
 
       const description = `Milestone doesn't correspond to JIRA fixVersions for ${issue.key}: ${details}`.substring(
@@ -457,7 +207,7 @@ async function withJiraIssue(
     repo: string
   } = context.repo({})
 
-  const credentials = await jiraCredentials(repoInfo.owner, repoInfo.repo)
+  const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
   context.log.debug('Credentials', credentials)
   context.log.debug('Config', config)
@@ -491,32 +241,6 @@ async function withJiraIssue(
     },
     issue => f([issue, issueUrl]),
   )
-}
-
-// ---
-
-function jiraCredentials(owner: string, repo: string): Promise<j.Credentials> {
-  const prefix = `${owner}_${repo}`.toUpperCase()
-
-  const domain = process.env[`${prefix}_JIRA_DOMAIN`] || process.env.JIRA_DOMAIN
-
-  if (!domain) {
-    return Promise.reject(new Error('Missing JIRA_DOMAIN'))
-  }
-
-  const username = process.env[`${prefix}_JIRA_USER`] || process.env.JIRA_USER
-
-  if (!username) {
-    return Promise.reject(new Error('Missing JIRA_USER'))
-  }
-
-  const apiToken = process.env[`${prefix}_JIRA_API_TOKEN`] || process.env.JIRA_API_TOKEN
-
-  if (!apiToken) {
-    return Promise.reject(new Error('Missing JIRA_API_TOKEN'))
-  }
-
-  return Promise.resolve({ domain, username, apiToken })
 }
 
 // ---
