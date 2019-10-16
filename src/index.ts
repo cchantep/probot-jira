@@ -57,7 +57,7 @@ export = (app: Application) => {
     const pr = await context.github.pulls
       .get({
         ...repoInfo,
-        number: prNumber,
+        pull_number: prNumber,
       })
       .then(resp => fromEither(PullRequestInfo.decode(resp.data)))
 
@@ -115,8 +115,31 @@ export = (app: Application) => {
     }),
   )
 
-  app.on('schedule.repository', async context => {
-    context.log('Scheduled')
+  app.on('repository_dispatch', async context => {
+    const i = context.payload.action.indexOf(':')
+
+    if (i == -1) {
+      context.log('Invalid action', context.payload.action)
+      return
+    }
+
+    // ---
+
+    const extPayload = JSON.parse(context.payload.action.substring(i+1))
+
+    context.log('Dispatch', {
+      extPayload: extPayload, payload: context.payload
+    })
+  })
+
+  app.on('schedule', async context => {
+    // event: schedule
+    context.log('Schedule', { event: context.event, action: context.payload })
+  })
+
+  app.on(`*`, async context => {
+    // event: schedule
+    context.log({ event: context.event, action: context.payload })
   })
 }
 
@@ -131,7 +154,7 @@ async function withIssuePR(context: Context, f: (pr: IPullRequestInfo) => Promis
   } else {
     const resp = await context.github.pulls.get(
       context.repo({
-        number: issue.number,
+        pull_number: issue.number,
       }),
     )
 

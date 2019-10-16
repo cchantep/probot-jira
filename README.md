@@ -18,28 +18,12 @@ To use this bot with [GitHub Actions](https://github.com/features/actions), the 
 name: JIRA consistency
 
 on: 
-  installation:
-    types: ['created', 'deleted']
   issues:
     types: ['milestoned', 'demilestoned']
   pull_request:
     types: ['opened', 'edited', 'synchronize', 'reopened', 'closed']
   schedule:
     - cron: '5 * * * *'
-
-inputs:
-  'jira domain':
-    description: 'JIRA domain (e.g. foo.atlassian.net)'
-    required: true
-  'jira user':
-    description: 'User name that this application impersonates when accessing JIRA (with the `JIRA_API_TOKEN` as password)'
-    required: true
-  'jira api token':
-    description: 'JIRA API token; See https://confluence.atlassian.com/cloud/api-tokens-938839638.html'
-    required: true
-  'jira project name':
-    description: 'JIRA project name (generally a 3 uppercase key)'
-    required: true
 
 jobs:
   jira_pr:
@@ -48,18 +32,29 @@ jobs:
       - uses: cchantep/probot-jira@ghaction-1.0.x
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          INPUT_JIRA_DOMAIN: 'my.domain.tld'
+          INPUT_JIRA_USER: 'my-jira-login@foo.bar'
+          INPUT_JIRA_PROJECT_NAME: 'PRJ'
 ```
+
+The required `JIRA_API_TOKEN` must be defined in the [repository secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables).
+
+> *Note:* The `INPUT_` prefixed env variables can be provided as GitHub action inputs (see thereafter).
 
 ### Configuration
 
-The following environment are required (and provided as inputs when this configured as [GitHub workflow](#github-actions).
+The following environment variables are required (and provided as inputs when this configured as [GitHub workflow](#github-actions).
 
 - `INPUT_JIRA_DOMAIN`: Your JIRA domain (e.g. foo.atlassian.net)
 - `INPUT_JIRA_USER`: User name that this application impersonates when accessing JIRA (with the following `JIRA_API_TOKEN` as password).
-- `INPUT_JIRA_API_TOKEN`: *See [Atlassian Cloud Support](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)*
 - `INPUT_JIRA_PROJECT_NAME`: The JIRA project name (generally a 3 uppercase key).
 
 If deployed as a shared instance, to define the JIRA settings per GitHub repository, replace the `INPUT_` prefix with owner and repository name: e.g. `MYUSER_MYREPO_JIRA_DOMAIN`.
+
+The variables bellow are also required to be set in the environment.
+
+- `JIRA_API_TOKEN`: *See [Atlassian Cloud Support](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)*
 
 On each repository for which the application is installed,
 a file named [`pr-jira.json`](./src/resources/pr-jira.json) can be defined on the base branches, in a `.github` directory at root. Default:

@@ -299,7 +299,7 @@
         "aggregatetimeestimate": null,
         "customfield_12627": null,
         "customfield_12629": null,
-        "summary": "HOTFIX - Affichage de la date d'édition pour un Article",
+        "summary": "HOTFIX - Affichage de la date d\'édition pour un Article",
         "creator": {
           "self": "https://foo.atlassian.net/rest/api/2/user?accountId=557058%3Aa8d14057-7ad6-46c8-93c2-dfd6debfa29e",
           "name": "usr2",
@@ -369,9 +369,9 @@
           "fieldtype": "jira",
           "fieldId": "summary",
           "from": null,
-          "fromString": "HOTFIX - Affichage de la date d'édition pour un article",
+          "fromString": "HOTFIX - Affichage de la date d\'édition pour un article",
           "to": null,
-          "toString": "HOTFIX - Affichage de la date d'édition pour un Article"
+          "toString": "HOTFIX - Affichage de la date d\'édition pour un Article"
         }
       ]
     }

@@ -265,19 +265,19 @@ export function credentials(owner: string, repo: string): Promise<j.Credentials>
   const domain = process.env[`${prefix}_JIRA_DOMAIN`] || process.env.INPUT_JIRA_DOMAIN
 
   if (!domain) {
-    return Promise.reject(new Error('Missing JIRA_DOMAIN'))
+    return Promise.reject(new Error('Missing JIRA domain'))
   }
 
   const username = process.env[`${prefix}_JIRA_USER`] || process.env.INPUT_JIRA_USER
 
   if (!username) {
-    return Promise.reject(new Error('Missing JIRA_USER'))
+    return Promise.reject(new Error('Missing JIRA user'))
   }
 
-  const apiToken = process.env[`${prefix}_JIRA_API_TOKEN`] || process.env.INPUT_JIRA_API_TOKEN
+  const apiToken = process.env[`${prefix}_JIRA_API_TOKEN`] || process.env.JIRA_API_TOKEN
 
   if (!apiToken) {
-    return Promise.reject(new Error('Missing JIRA_API_TOKEN'))
+    return Promise.reject(new Error('Missing JIRA API token'))
   }
 
   return Promise.resolve({ domain, username, apiToken })
