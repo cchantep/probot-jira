@@ -1,0 +1,20 @@
+name: JIRA consistency
+description: Check consistency repository and JIRA
+branding:
+  icon: 'link-2'
+  color: 'blue'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+
+inputs:
+  'jira domain':
+    description: 'JIRA domain (e.g. foo.atlassian.net)'
+    required: true
+  'jira user':
+    description: 'User name that this application impersonates when accessing JIRA (with the `JIRA_API_TOKEN` as password)'
+    required: true
+  'jira project name':
+    description: 'JIRA project name (generally a 3 uppercase key)'
+    required: true
