@@ -2,7 +2,7 @@ import * as t from 'io-ts'
 
 //import { PathReporter } from 'io-ts/lib/PathReporter'
 
-import { Callback, Hook, Issue, IssueCallback } from '../src/model/jira'
+import { Hook, Issue } from '../src/model/jira'
 
 // Fixtures
 import jiraIssue1 from './fixtures/jira-issue1.json'
@@ -11,8 +11,6 @@ import jiraIssue3 from './fixtures/jira-issue3.json'
 import jiraIssue4 from './fixtures/jira-issue4.json'
 
 import jiraHooks1 from './fixtures/jira-hooks1.json'
-
-import jiraCallback1 from './fixtures/jira-callback1.json'
 
 import * as jf from './fixtures/jiraissue'
 import * as jh from './fixtures/jirahooks'
@@ -28,7 +26,7 @@ describe('Validation', () => {
 
     expect(res).toEqual({
       _tag: 'Right',
-      value: jf.issue1,
+      right: jf.issue1,
     })
   })
 
@@ -37,7 +35,7 @@ describe('Validation', () => {
 
     expect(res).toEqual({
       _tag: 'Right',
-      value: jf.issue2,
+      right: jf.issue2,
     })
   })
 
@@ -46,7 +44,7 @@ describe('Validation', () => {
 
     expect(res).toEqual({
       _tag: 'Right',
-      value: jf.issue3,
+      right: jf.issue3,
     })
   })
 
@@ -55,16 +53,7 @@ describe('Validation', () => {
 
     expect(res).toEqual({
       _tag: 'Right',
-      value: jf.issue4,
-    })
-  })
-
-  test('Decode JIRA issue #6 from callback payload', () => {
-    const res = Issue.decode(jiraCallback1.payload.issue)
-
-    expect(res).toEqual({
-      _tag: 'Right',
-      value: jf.issue5,
+      right: jf.issue4,
     })
   })
 
@@ -75,27 +64,7 @@ describe('Validation', () => {
 
     expect(res).toEqual({
       _tag: 'Right',
-      value: jh.hooks1,
-    })
-  })
-
-  // --- JIRA callback
-
-  test('Decode JIRA callback from JSON payload', () => {
-    const res = Callback.decode(jiraCallback1)
-
-    expect(res).toEqual({
-      _tag: 'Right',
-      value: jc.callback1,
-    })
-  })
-
-  test('Decode JIRA issue callback from JSON payload', () => {
-    const res = IssueCallback.decode(jiraCallback1)
-
-    expect(res).toEqual({
-      _tag: 'Right',
-      value: jc.issueCallback1,
+      right: jh.hooks1,
     })
   })
 })

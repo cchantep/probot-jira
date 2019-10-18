@@ -4,14 +4,20 @@ import * as t from 'io-ts'
 import { none, some, Option } from 'fp-ts/lib/Option'
 
 import * as util from './util'
+import { RepoRef } from './model/pullrequest'
 
 // ---
 
 import { GetContentResponse, IGetContentResponse } from './model/content'
 
-function getContent(bot: Context, path: string, ref: string): Promise<IGetContentResponse> {
+function getContent(
+  bot: Context,
+  repo: RepoRef,
+  path: string,
+  ref: string
+): Promise<IGetContentResponse> {
   return bot.github.repos
-    .getContents(bot.repo({ path, ref }))
+    .getContents({ ...repo, path })
     .then(payload => util.fromEither(GetContentResponse.decode(payload)))
 }
 
@@ -24,7 +30,6 @@ export const Config = t.exact(
     issueKeyRegex: t.string,
     fixVersionRegex: t.string,
     postMergeStatus: t.array(t.string),
-    postMergeDelay: t.number,
   }),
 )
 
@@ -47,16 +52,25 @@ type Enc =
 
 // ---
 
-function getFromJson(bot: Context, path: string, ref: string): Promise<{}> {
-  return getContent(bot, path, ref).then(resp => {
+function getFromJson(
+  bot: Context,
+  repo: RepoRef,
+  path: string,
+  ref: string
+): Promise<{}> {
+  return getContent(bot, repo, path, ref).then(resp => {
     const buff = Buffer.from(resp.data.content, resp.data.encoding as Enc)
 
     return JSON.parse(buff.toString('utf8'))
   })
 }
 
-export function getConfig(bot: Context, ref: string): Promise<IConfig> {
-  return getFromJson(bot, '.github/pr-jira.json', ref)
+export function getConfig(
+  bot: Context,
+  repo: RepoRef,
+  ref: string
+): Promise<IConfig> {
+  return getFromJson(bot, repo, '.github/pr-jira.json', ref)
     .then(json => util.fromEither(Config.decode(json)))
     .then(
       decoded => decoded,

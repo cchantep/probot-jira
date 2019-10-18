@@ -54,30 +54,3 @@ export type IHook = t.TypeOf<typeof Hook>
 
 // ---
 
-const User = t.exact(t.type({
-  name: t.string,
-  key: t.string,
-  displayName: t.string,
-  emailAddress: t.string,
-  self: t.string
-}))
-
-const CallbackPayload = t.type({
-  timestamp: t.number,
-  webhookEvent: t.string,
-  user: User
-})
-
-export const Callback = t.exact(t.type({
-  payload: t.exact(CallbackPayload)
-}))
-
-export type ICallback = t.TypeOf<typeof Callback>
-
-export const IssueCallback = t.exact(t.type({
-  payload: t.exact(t.intersection([ CallbackPayload, t.type({
-    issue: Issue
-  }) ]))
-}))
-
-export type IIssueCallback = t.TypeOf<typeof IssueCallback>

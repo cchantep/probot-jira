@@ -1,5 +1,7 @@
 import * as t from 'io-ts'
 
+export type RepoRef = { owner: string, repo: string }
+
 export type CommitState = 'success' | 'error' | 'failure' | 'pending'
 
 export const UserInfo = t.exact(

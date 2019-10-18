@@ -1,3 +1,5 @@
+import * as option from 'fp-ts/lib/Option'
+
 import nock from 'nock'
 
 import * as j from '../src/jira/client'
@@ -41,7 +43,7 @@ describe('JIRA client', () => {
   test('must not find issue for invalid ref', async () => {
     const res = await j.getIssue(credentials, 'NO_ISSUE')
 
-    expect(res.isNone()).toEqual(true)
+    expect(option.isNone(res)).toEqual(true)
   })
 
   // ---
@@ -53,7 +55,7 @@ describe('JIRA client', () => {
   test(`must find issue ${issueRef}`, async () => {
     const res = await j.getIssue(credentials, issueRef)
 
-    expect(res.toUndefined()).toEqual(jf.issue1)
+    expect(option.toUndefined(res)).toEqual(jf.issue1)
   })
 
   // ---
@@ -73,22 +75,10 @@ describe('JIRA client', () => {
   test('must get a hook by ID', async () => {
     const res = await j.getHook(credentials, '1')
 
-    expect(res.toUndefined()).toEqual(jh.hooks1[0])
+    expect(option.toUndefined(res)).toEqual(jh.hooks1[0])
   })
 
   // ---
-
-  scope2.options('/rest/webhooks/latest/webhook/1').reply(200)
-  scope1.delete('/rest/webhooks/latest/webhook/1').reply(200)
-
-  test('must unregister a hook by ID', async () => {
-    const res = await j.unregisterHook(credentials, 'https://foo.atlassian.net/rest/webhooks/latest/webhook/1')
-
-    expect(res).toEqual({
-      _tag: 'Right',
-      value: void 0,
-    })
-  })
 
   scope2
     .post(

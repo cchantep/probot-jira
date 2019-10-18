@@ -4,9 +4,9 @@
 
 ## Usage
 
-Just [configure](#configuration) with JIRA integration and have the right pull request naming.
+For each pull request matching a JIRA issue (see [`issueKeyRegex`](#developer-configuration), the consistency is checked (GitHub milestone corresponds to [JIRA issue fix version](https://www.atlassian.com/agile/tutorials/versions)).
 
-> TODO
+When a JIRA related pull request is merged, this app warns the author if the JIRA issue is not updated (see [`postMergeStatus`](#developer-configuration)).
 
 ![Usage](./docs/usage.png)
 
@@ -32,32 +32,39 @@ jobs:
       - uses: cchantep/probot-jira@ghaction-1.0.x
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERSONAL_TOKEN_VALUE: 'personal_token'
+          PERSONAL_TOKEN_USER: 'username_of_personal_token'
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          INPUT_JIRA_DOMAIN: 'my.domain.tld'
-          INPUT_JIRA_USER: 'my-jira-login@foo.bar'
-          INPUT_JIRA_PROJECT_NAME: 'PRJ'
+          JIRA_DOMAIN: 'my.domain.tld'
+          JIRA_USER: 'my-jira-login@foo.bar'
+          JIRA_PROJECT_NAME: 'PRJ'
 ```
 
-The required `JIRA_API_TOKEN` must be defined in the [repository secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables).
+*GitHub action limitations:* Has there is no specific process to uninstall an action, this app is not able to remove its JIRA hooks when no longer used in a GitHub workflow (have to remove manually the JIRA hook with a name of form `github-pr-jira*`).
 
-> *Note:* The `INPUT_` prefixed env variables can be provided as GitHub action inputs (see thereafter).
+### Global configuration
 
-### Configuration
+The required `JIRA_API_TOKEN` must be defined in the [repository secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) (see [Atlassian Cloud Support](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)).
+This token must be allowed to read and write hooks using the JIRA REST API, and to read issue for the configured projects.
 
-The following environment variables are required (and provided as inputs when this configured as [GitHub workflow](#github-actions).
+To complete the JIRA integration, the following environment variables are required.
 
-- `INPUT_JIRA_DOMAIN`: Your JIRA domain (e.g. foo.atlassian.net)
-- `INPUT_JIRA_USER`: User name that this application impersonates when accessing JIRA (with the following `JIRA_API_TOKEN` as password).
-- `INPUT_JIRA_PROJECT_NAME`: The JIRA project name (generally a 3 uppercase key).
+- `JIRA_DOMAIN`: Your JIRA domain (e.g. foo.atlassian.net)
+- `JIRA_USER`: User name that this application impersonates when accessing JIRA (with the following `JIRA_API_TOKEN` as password).
+- `JIRA_PROJECT_NAME`: The JIRA project name (generally a 3 uppercase key).
 
-If deployed as a shared instance, to define the JIRA settings per GitHub repository, replace the `INPUT_` prefix with owner and repository name: e.g. `MYUSER_MYREPO_JIRA_DOMAIN`.
+- `PERSONAL_TOKEN_VALUE`: A [personal token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) created for a GitHub user having access to the repository ([`repo` scope](https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes)).
+- `PERSONAL_TOKEN_USER`: The name of the user for which the `PERSONAL_TOKEN_VALUE` is defined.
 
-The variables bellow are also required to be set in the environment.
+![Personal token](./docs/personal-token.png)
 
-- `JIRA_API_TOKEN`: *See [Atlassian Cloud Support](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)*
+> When this is configured as [GitHub workflow](#github-actions), the previous settings can be defined as input (set in environment with `INPUT_` prefix).
 
-On each repository for which the application is installed,
-a file named [`pr-jira.json`](./src/resources/pr-jira.json) can be defined on the base branches, in a `.github` directory at root. Default:
+If deployed as a shared instance, to define the JIRA settings per GitHub repository, add a uppercase prefix with owner and repository name: e.g. `MYUSER_MYREPO_JIRA_DOMAIN`.
+
+### Developer configuration
+
+On each repository for which the application is installed, a file named [`.github/pr-jira.json`](./src/resources/pr-jira.json) can be defined (defaults thereafter).
 
 ```json
 {
@@ -71,6 +78,8 @@ a file named [`pr-jira.json`](./src/resources/pr-jira.json) can be defined on th
 - `fixVersionRegex`: Regular expression to capture (with the first group) the milestone from a JIRA fix version.
 - `postMergeStatus`: One or more JIRA status names (as displayed in the JIRA UI), that are expected for an JIRA issue corresponding to a merged pull request.
 
+This configuration is considered per each base branch. 
+
 ## Build
 
 ```sh
@@ -80,9 +89,14 @@ npm install
 # Run typescript
 npm run build
 
+# Run the tests
+npm run test
+
 # Run the bot
 npm start
 ```
+
+[![CircleCI](https://circleci.com/gh/cchantep/probot-jira.svg?style=svg)](https://circleci.com/gh/cchantep/probot-jira)
 
 ## Contributing
 

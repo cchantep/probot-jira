@@ -84,7 +84,7 @@ export const issue5: IIssue = {
     ],
     resolution: { name: 'Done' },
     status: { name: 'DONE' },
-    summary: 'HOTFIX - Affichage de la date d\'édition pour un Article',
+    summary: 'HOTFIX - Affichage de la date édition pour un Article',
   },
   key: 'PRJ-2042',
   id: '59404',

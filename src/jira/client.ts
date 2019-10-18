@@ -66,20 +66,6 @@ export function getHook(credentials: Credentials, id: string): Promise<Option<IH
   )
 }
 
-export function unregisterHook(credentials: Credentials, selfUrl: string): Promise<Either<string, void>> {
-  const { username, apiToken } = credentials
-  const hookUrl = `https://${encodeURIComponent(username)}:${apiToken}@${selfUrl.substring(8)}`
-
-  return axios({
-    method: 'delete',
-    url: hookUrl,
-  }).then(
-    resp =>
-      resp.status != 200 ? Promise.resolve(left(`Unexpected status: ${resp.status}`)) : Promise.resolve(right(void 0)),
-    err => (err.response.status == 404 ? Promise.resolve(left('Hook not found')) : Promise.reject(err)),
-  )
-}
-
 export function registerHook(credentials: Credentials, hook: IHookSettings): Promise<Either<string, void>> {
   const { domain, username, apiToken } = credentials
 
