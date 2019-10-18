@@ -1,4 +1,15 @@
-import { Application } from 'probot';
+import { GitHubAPI } from 'probot/lib/github';
+import { LoggerWithTarget } from 'probot/lib/wrap-logger';
 import * as j from './client';
-export declare const setup: (app: Application) => void;
+declare type InstallRepo = {
+    owner: string;
+    repo: string;
+};
+declare type EventContext = {
+    repo: InstallRepo;
+    github: GitHubAPI;
+    log: LoggerWithTarget;
+};
+export declare function ensureHook(ctx: EventContext): Promise<InstallRepo>;
 export declare function credentials(owner: string, repo: string): Promise<j.Credentials>;
+export {};
