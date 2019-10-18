@@ -5,6 +5,4 @@ WORKDIR /app
 COPY . .
 RUN npm install --production
 
-ENV GH_USER="github-actions"
-ENTRYPOINT ["probot", "receive"]
-CMD ["/app/lib/index.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
