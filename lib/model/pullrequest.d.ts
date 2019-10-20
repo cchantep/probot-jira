@@ -1,4 +1,8 @@
 import * as t from 'io-ts';
+export declare type RepoRef = {
+    owner: string;
+    repo: string;
+};
 export declare type CommitState = 'success' | 'error' | 'failure' | 'pending';
 export declare const UserInfo: t.ExactC<t.TypeC<{
     login: t.StringC;
