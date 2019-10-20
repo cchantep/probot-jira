@@ -10,12 +10,7 @@ import { RepoRef } from './model/pullrequest'
 
 import { GetContentResponse, IGetContentResponse } from './model/content'
 
-function getContent(
-  bot: Context,
-  repo: RepoRef,
-  path: string,
-  ref: string
-): Promise<IGetContentResponse> {
+function getContent(bot: Context, repo: RepoRef, path: string, ref: string): Promise<IGetContentResponse> {
   return bot.github.repos
     .getContents({ ...repo, path })
     .then(payload => util.fromEither(GetContentResponse.decode(payload)))
@@ -52,12 +47,7 @@ type Enc =
 
 // ---
 
-function getFromJson(
-  bot: Context,
-  repo: RepoRef,
-  path: string,
-  ref: string
-): Promise<{}> {
+function getFromJson(bot: Context, repo: RepoRef, path: string, ref: string): Promise<{}> {
   return getContent(bot, repo, path, ref).then(resp => {
     const buff = Buffer.from(resp.data.content, resp.data.encoding as Enc)
 
@@ -65,11 +55,7 @@ function getFromJson(
   })
 }
 
-export function getConfig(
-  bot: Context,
-  repo: RepoRef,
-  ref: string
-): Promise<IConfig> {
+export function getConfig(bot: Context, repo: RepoRef, ref: string): Promise<IConfig> {
   return getFromJson(bot, repo, '.github/pr-jira.json', ref)
     .then(json => util.fromEither(Config.decode(json)))
     .then(

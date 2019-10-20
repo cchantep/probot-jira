@@ -63,8 +63,7 @@ export = (app: Application) => {
     const config = await c.getConfig(context, repoInfo, pr.base.ref)
     const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
-    return checkIsClosed(
-      context, config, repoInfo, credentials, event.user.login, pr)
+    return checkIsClosed(context, config, repoInfo, credentials, event.user.login, pr)
   })
 
   app.on('issues.milestoned', context => {
@@ -80,15 +79,7 @@ export = (app: Application) => {
           const [issue, url] = data
           const msg = `Milestone expected to check with JIRA issue ${issue.key}`
 
-          return toggleState(
-            context,
-            repo,
-            StatusContext,
-            pr.head.sha,
-            'failure',
-            msg,
-            some(url)
-          )
+          return toggleState(context, repo, StatusContext, pr.head.sha, 'failure', msg, some(url))
         })
       })
     }),
@@ -131,7 +122,9 @@ export = (app: Application) => {
     })
 
     // TODO: config
-    async function find(items: ReadonlyArray<PullsListResponseItem>): Promise<[IPullRequestInfo, c.IConfig] | undefined> {
+    async function find(
+      items: ReadonlyArray<PullsListResponseItem>,
+    ): Promise<[IPullRequestInfo, c.IConfig] | undefined> {
       if (items.length < 1) {
         return Promise.resolve(undefined)
       }
@@ -190,7 +183,7 @@ export = (app: Application) => {
       state: 'closed',
       sort: 'updated',
       direction: 'desc',
-      per_page: 50
+      per_page: 50,
     })
 
     const merged = resp.data.filter(i => !!i.merged_at)
@@ -208,9 +201,7 @@ export = (app: Application) => {
 
       context.log(`Closed PR #${pr.number}`)
 
-      return checkIsClosed(
-        context, config, repoInfo, credentials, pr.user.login, pr)
-        .then(_r => check(items.slice(1)))
+      return checkIsClosed(context, config, repoInfo, credentials, pr.user.login, pr).then(_r => check(items.slice(1)))
     }
 
     check(merged)
@@ -240,7 +231,7 @@ export = (app: Application) => {
 function scheduledRepoInfo(context: Context): RepoRef | undefined {
   try {
     return context.repo({})
-  } catch(e) {
+  } catch (e) {
     context.log.debug('Default repository resolution fails', e)
   }
 
@@ -272,7 +263,7 @@ function checkIsClosed(
   repoInfo: RepoRef,
   credentials: j.Credentials,
   author: string,
-  pr: IPullRequestInfo
+  pr: IPullRequestInfo,
 ): Promise<void> {
   return withJiraIssue(context, repoInfo, pr, config, data => {
     const [issue, url] = data
@@ -285,15 +276,16 @@ function checkIsClosed(
     } else {
       const details = config.postMergeStatus.join(', ')
       const msg = `JIRA issue [${issue.key}](${url}) doesn't seem to have a valid status: '${jiraStatus}' !~ [${details}]`
-      
+
       context.log(`${msg} (pull request #${pr.number})`)
-      
+
       return context.github.issues
         .createComment({
           ...repoInfo,
           issue_number: pr.number,
           body: `@${author} ${msg}. Please check it.`,
-        }).then(_r => Promise.resolve())
+        })
+        .then(_r => Promise.resolve())
     }
   })
 }
@@ -383,15 +375,7 @@ async function checkMilestone(
       140,
     )
 
-    return toggleState(
-      context,
-      repo,
-      StatusContext,
-      pr.head.sha,
-      'error',
-      description,
-      some(issueUrl)
-    )
+    return toggleState(context, repo, StatusContext, pr.head.sha, 'error', description, some(issueUrl))
   }
 }
 
@@ -412,15 +396,7 @@ async function withJiraIssue(
     (msg: string) => {
       context.log(`Pull request #${pr.number} ${msg}`)
 
-      return toggleState(
-        context,
-        repoInfo,
-        StatusContext,
-        pr.head.sha,
-        'success',
-        msg,
-        none
-      )
+      return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'success', msg, none)
     },
     async (k: string) => {
       const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
@@ -437,15 +413,7 @@ async function withJiraIssue(
         (msg: string) => {
           context.log(`${msg} corresponding to pull request #${pr.number}`)
 
-          return toggleState(
-            context,
-            repoInfo,
-            StatusContext,
-            pr.head.sha,
-            'error',
-            msg,
-            none
-          )
+          return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'error', msg, none)
         },
         (issue: IIssue) => {
           const issueUrl = `https://${credentials.domain}/browse/${issue.key}`
@@ -516,7 +484,7 @@ function getCommitStatus(
   bot: Context,
   repo: RepoRef,
   ref: string,
-  ctx: string
+  ctx: string,
 ): Promise<Option<ReposListStatusesForRefResponseItem>> {
   return bot.github.repos.listStatusesForRef({ ...repo, ref }).then(resp => {
     const found = resp.data.find(s => s.context == ctx)
