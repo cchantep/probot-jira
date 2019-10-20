@@ -4,7 +4,7 @@
 
 ## Usage
 
-For each pull request matching a JIRA issue (see [`issueKeyRegex`](#developer-configuration), the consistency is checked (GitHub milestone corresponds to [JIRA issue fix version](https://www.atlassian.com/agile/tutorials/versions)).
+For each pull request matching a JIRA issue (see [`issueKeyRegex`](#developer-configuration)), the consistency is checked (GitHub milestone corresponds to [JIRA issue fix version](https://www.atlassian.com/agile/tutorials/versions)).
 
 When a JIRA related pull request is merged, this app warns the author if the JIRA issue is not updated (see [`postMergeStatus`](#developer-configuration)).
 

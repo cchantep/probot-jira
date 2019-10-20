@@ -84,7 +84,7 @@ export = (app: Application) => {
       return withJiraIssue(context, repo, pr, config, data => {
         const [issue, url] = data
         const msg = `Milestone expected to check with JIRA issue ${issue.key}`
-        
+
         return toggleState(context, repo, StatusContext, pr.head.sha, 'failure', msg, some(url))
       })
     }),
