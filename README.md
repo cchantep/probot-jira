@@ -1,6 +1,6 @@
 # pr-jira
 
-> A GitHub App built with [Probot](https://github.com/probot/probot) that Probot app that check consistency between pull requests and JIRA issues
+> A GitHub App built with [Probot](https://github.com/probot/probot) that check consistency between pull requests and JIRA issues
 
 ## Usage
 

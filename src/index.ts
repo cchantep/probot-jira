@@ -67,20 +67,25 @@ export = (app: Application) => {
   })
 
   app.on('issues.milestoned', context => {
-    return withIssuePR(context, pr => mainHandler(context, pr))
+    return withIssuePR(context, pr => {
+      context.log(`Milestoning pull request #${pr.number}`)
+
+      return mainHandler(context, pr)
+    })
   })
 
   app.on('issues.demilestoned', context =>
-    withIssuePR(context, pr => {
+    withIssuePR(context, async pr => {
+      context.log(`Demilestoning pull request #${pr.number}`)
+
       const repo = context.repo({})
+      const config = await c.getConfig(context, repo, pr.base.ref)
 
-      return c.getConfig(context, repo, pr.base.ref).then(config => {
-        return withJiraIssue(context, repo, pr, config, data => {
-          const [issue, url] = data
-          const msg = `Milestone expected to check with JIRA issue ${issue.key}`
-
-          return toggleState(context, repo, StatusContext, pr.head.sha, 'failure', msg, some(url))
-        })
+      return withJiraIssue(context, repo, pr, config, data => {
+        const [issue, url] = data
+        const msg = `Milestone expected to check with JIRA issue ${issue.key}`
+        
+        return toggleState(context, repo, StatusContext, pr.head.sha, 'failure', msg, some(url))
       })
     }),
   )
@@ -390,15 +395,17 @@ async function withJiraIssue(
 
   const issueKey = jiraIssueKey(context, config, pr)
 
-  context.log.debug('Issue key', issueKey)
-
   either.fold(
-    (msg: string) => {
+    (err: Error) => {
+      const msg = err.message
+
       context.log(`Pull request #${pr.number} ${msg}`)
 
       return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'success', msg, none)
     },
     async (k: string) => {
+      context.log(`Pull request #${pr.number} corresponds to JIRA issue ${k}`)
+
       const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
       context.log.debug('Credentials', credentials)
@@ -431,7 +438,7 @@ function jiraIssueKey(
   context: Context,
   config: c.IConfig,
   pr: { title: string; number: number },
-): either.Either<string, string> {
+): either.Either<Error, string> {
   const m = pr.title.match(config.issueKeyRegex)
 
   if (!m || m.length < 2) {
@@ -439,7 +446,7 @@ function jiraIssueKey(
 
     context.log.debug(`Title of pull request #${pr.number} ${msg}: ${pr.title}`)
 
-    return either.left(msg)
+    return either.left(new Error(msg))
   } else {
     return either.right(m[1])
   }
