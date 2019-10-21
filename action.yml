@@ -13,8 +13,11 @@ inputs:
     description: 'JIRA domain (e.g. foo.atlassian.net)'
     required: true
   'jira user':
-    description: 'User name that this application impersonates when accessing JIRA (with the `JIRA_API_TOKEN` as password)'
+    description: 'User name that this application impersonates when accessing JIRA (corresponds to the `JIRA_API_TOKEN` to be defined in the repository secrets)'
     required: true
   'jira project name':
     description: 'JIRA project name (generally a 3 uppercase key)'
+    required: true
+  'personal token user':
+    description: 'Name of GitHub user corresponding to PERSONAL_TOKEN_VALUE (to be defined in repository secrets)'
     required: true
