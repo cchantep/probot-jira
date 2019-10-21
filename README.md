@@ -1,6 +1,6 @@
 # pr-jira
 
-> A GitHub App built with [Probot](https://github.com/probot/probot) that check consistency between pull requests and JIRA issues
+> A GitHub App built that check consistency between pull requests and JIRA issues
 
 ## Usage
 
@@ -33,7 +33,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PERSONAL_TOKEN_VALUE: 'personal_token'
-          PERSONAL_TOKEN_USER: 'username_of_personal_token'
+          PERSONAL_TOKEN_USER: ${{ secrets.PERSONAL_TOKEN_VALUE }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_DOMAIN: 'my.domain.tld'
           JIRA_USER: 'my-jira-login@foo.bar'
@@ -44,19 +44,23 @@ jobs:
 
 ### Global configuration
 
-The required `JIRA_API_TOKEN` must be defined in the [repository secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) (see [Atlassian Cloud Support](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)).
+[**Secrets:**](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) (required)
+
+The `JIRA_API_TOKEN` must be defined in the repository secrets (see [Atlassian Cloud Support](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)) (see `JIRA_USER` thereafter).
 This token must be allowed to read and write hooks using the JIRA REST API, and to read issue for the configured projects.
+
+The `PERSONAL_TOKEN_VALUE` must be set with a [GitHub user token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) having access to the repository ([`repo` scope](https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes); see `PERSONAL_TOKEN_USER` thereafter).
+
+![Personal token](./docs/personal-token.png)
+
+**JIRA integration:**
 
 To complete the JIRA integration, the following environment variables are required.
 
 - `JIRA_DOMAIN`: Your JIRA domain (e.g. foo.atlassian.net)
 - `JIRA_USER`: User name that this application impersonates when accessing JIRA (with the following `JIRA_API_TOKEN` as password).
 - `JIRA_PROJECT_NAME`: The JIRA project name (generally a 3 uppercase key).
-
-- `PERSONAL_TOKEN_VALUE`: A [personal token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) created for a GitHub user having access to the repository ([`repo` scope](https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes)).
-- `PERSONAL_TOKEN_USER`: The name of the user for which the `PERSONAL_TOKEN_VALUE` is defined.
-
-![Personal token](./docs/personal-token.png)
+- `PERSONAL_TOKEN_USER`: The name of the user for which the secret `PERSONAL_TOKEN_VALUE` is defined.
 
 > When this is configured as [GitHub workflow](#github-actions), the previous settings can be defined as input (set in environment with `INPUT_` prefix).
 

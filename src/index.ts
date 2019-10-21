@@ -399,9 +399,9 @@ async function withJiraIssue(
     (err: Error) => {
       const msg = err.message
 
-      context.log(`Pull request #${pr.number} ${msg}`)
+      return context.log(`Pull request #${pr.number} ${msg}`)
 
-      return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'success', msg, none)
+      //return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'success', msg, none)
     },
     async (k: string) => {
       context.log(`Pull request #${pr.number} corresponds to JIRA issue ${k}`)

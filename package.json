@@ -1,6 +1,6 @@
 {
   "name": "pr-jira",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Probot app that check consistency between pull requests and JIRA issues",
   "author": "Cédric Chantepie (https://github.com/cchantep)",
   "license": "ISC",
