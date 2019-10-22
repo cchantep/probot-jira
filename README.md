@@ -1,6 +1,6 @@
 # pr-jira
 
-> A GitHub App built that check consistency between pull requests and JIRA issues
+> A GitHub App that checks the consistency between pull requests and JIRA issues
 
 ## Usage
 
