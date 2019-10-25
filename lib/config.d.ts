@@ -5,6 +5,7 @@ export declare const Config: t.ExactC<t.TypeC<{
     issueKeyRegex: t.StringC;
     fixVersionRegex: t.StringC;
     postMergeStatus: t.ArrayC<t.StringC>;
+    githubDispatchBaseUrl: t.UnionC<[t.StringC, t.UndefinedC]>;
 }>>;
 export declare type IConfig = t.TypeOf<typeof Config>;
 export declare const DefaultConfig: IConfig;
