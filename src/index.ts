@@ -14,7 +14,7 @@ import * as j from './jira/client'
 import { IIssue } from './model/jira'
 import { CommitState, PullRequestEvent, PullRequestInfo, IPullRequestInfo, RepoRef } from './model/pullrequest'
 
-import { PullsListResponseItem, ReposListStatusesForRefResponseItem } from '@octokit/rest'
+import { Octokit } from '@octokit/rest'
 
 const StatusContext = 'pr-jira'
 
@@ -128,7 +128,7 @@ export = (app: Application) => {
 
     // TODO: config
     async function find(
-      items: ReadonlyArray<PullsListResponseItem>,
+      items: ReadonlyArray<Octokit.PullsListResponseItem>,
     ): Promise<[IPullRequestInfo, c.IConfig] | undefined> {
       if (items.length < 1) {
         return Promise.resolve(undefined)
@@ -194,7 +194,7 @@ export = (app: Application) => {
     const merged = resp.data.filter(i => !!i.merged_at)
     const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
-    async function check(items: ReadonlyArray<PullsListResponseItem>): Promise<void> {
+    async function check(items: ReadonlyArray<Octokit.PullsListResponseItem>): Promise<void> {
       if (items.length == 0) {
         return context.log.debug('End periodic check', repoInfo)
       }
@@ -452,7 +452,7 @@ function jiraIssueKey(
   }
 }
 
-const isSuccessful = exists((s: ReposListStatusesForRefResponseItem) => s.state != 'success')
+const isSuccessful = exists((s: Octokit.ReposListStatusesForRefResponseItem) => s.state != 'success')
 
 function toggleState(
   bot: Context,
@@ -467,7 +467,9 @@ function toggleState(
     const mustSet =
       expectedState == 'success'
         ? isSuccessful(st)
-        : !exists((s: ReposListStatusesForRefResponseItem) => s.state == expectedState && s.description == msg)(st)
+        : !exists((s: Octokit.ReposListStatusesForRefResponseItem) => s.state == expectedState && s.description == msg)(
+            st,
+          )
 
     if (!mustSet) {
       return Promise.resolve()
@@ -492,7 +494,7 @@ function getCommitStatus(
   repo: RepoRef,
   ref: string,
   ctx: string,
-): Promise<Option<ReposListStatusesForRefResponseItem>> {
+): Promise<Option<Octokit.ReposListStatusesForRefResponseItem>> {
   return bot.github.repos.listStatusesForRef({ ...repo, ref }).then(resp => {
     const found = resp.data.find(s => s.context == ctx)
 
