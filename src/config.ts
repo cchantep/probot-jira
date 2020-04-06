@@ -13,7 +13,7 @@ import { GetContentResponse, IGetContentResponse } from './model/content'
 function getContent(bot: Context, repo: RepoRef, path: string, ref: string): Promise<IGetContentResponse> {
   return bot.github.repos
     .getContents({ ...repo, path })
-    .then(payload => util.fromEither(GetContentResponse.decode(payload)))
+    .then((payload) => util.fromEither(GetContentResponse.decode(payload)))
 }
 
 // ---
@@ -48,7 +48,7 @@ type Enc =
 // ---
 
 function getFromJson(bot: Context, repo: RepoRef, path: string, ref: string): Promise<{}> {
-  return getContent(bot, repo, path, ref).then(resp => {
+  return getContent(bot, repo, path, ref).then((resp) => {
     const buff = Buffer.from(resp.data.content, resp.data.encoding as Enc)
 
     return JSON.parse(buff.toString('utf8'))
@@ -57,10 +57,10 @@ function getFromJson(bot: Context, repo: RepoRef, path: string, ref: string): Pr
 
 export function getConfig(bot: Context, repo: RepoRef, ref: string): Promise<IConfig> {
   return getFromJson(bot, repo, '.github/pr-jira.json', ref)
-    .then(json => util.fromEither(Config.decode(json)))
+    .then((json) => util.fromEither(Config.decode(json)))
     .then(
-      decoded => decoded,
-      err => {
+      (decoded) => decoded,
+      (err) => {
         bot.log.debug(`Fails to load configuration from branch '${ref}'`, err)
 
         return DefaultConfig
