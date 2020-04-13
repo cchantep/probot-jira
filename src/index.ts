@@ -29,7 +29,7 @@ const IssueInfo = t.exact(
 export = (app: Application) => {
   app.on(
     ['pull_request.opened', 'pull_request.edited', 'pull_request.synchronize', 'pull_request.reopened'],
-    async context => {
+    async (context) => {
       const event = await fromEither(PullRequestEvent.decode(context.payload))
 
       context.log.debug('Event', event)
@@ -40,7 +40,7 @@ export = (app: Application) => {
     },
   )
 
-  app.on('pull_request.closed', async context => {
+  app.on('pull_request.closed', async (context) => {
     const event = context.payload.pull_request
     const prNumber = event.number
 
@@ -58,7 +58,7 @@ export = (app: Application) => {
         ...repoInfo,
         pull_number: prNumber,
       })
-      .then(resp => fromEither(PullRequestInfo.decode(resp.data)))
+      .then((resp) => fromEither(PullRequestInfo.decode(resp.data)))
 
     const config = await c.getConfig(context, repoInfo, pr.base.ref)
     const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
@@ -66,22 +66,22 @@ export = (app: Application) => {
     return checkIsClosed(context, config, repoInfo, credentials, event.user.login, pr)
   })
 
-  app.on('issues.milestoned', context => {
-    return withIssuePR(context, pr => {
+  app.on('issues.milestoned', (context) => {
+    return withIssuePR(context, (pr) => {
       context.log(`Milestoning pull request #${pr.number}`)
 
       return mainHandler(context, pr)
     })
   })
 
-  app.on('issues.demilestoned', context =>
-    withIssuePR(context, async pr => {
+  app.on('issues.demilestoned', (context) =>
+    withIssuePR(context, async (pr) => {
       context.log(`Demilestoning pull request #${pr.number}`)
 
       const repo = context.repo({})
       const config = await c.getConfig(context, repo, pr.base.ref)
 
-      return withJiraIssue(context, repo, pr, config, data => {
+      return withJiraIssue(context, repo, pr, config, (data) => {
         const [issue, url] = data
         const msg = `Milestone expected to check with JIRA issue ${issue.key}`
 
@@ -90,7 +90,7 @@ export = (app: Application) => {
     }),
   )
 
-  app.on('repository_dispatch', async context => {
+  app.on('repository_dispatch', async (context) => {
     const i = context.payload.action.indexOf('@')
 
     if (i == -1) {
@@ -149,7 +149,7 @@ export = (app: Application) => {
 
       // ---
 
-      return fromEither(PullRequestInfo.decode(pr)).then(r => [r, config])
+      return fromEither(PullRequestInfo.decode(pr)).then((r) => [r, config])
     }
 
     const result = await find(resp.data)
@@ -170,7 +170,7 @@ export = (app: Application) => {
     checkMilestone(context, repoInfo, config, prInfo, issue, issueUrl)
   })
 
-  app.on('schedule', async context => {
+  app.on('schedule', async (context) => {
     const r = scheduledRepoInfo(context)
 
     if (!r) {
@@ -191,7 +191,7 @@ export = (app: Application) => {
       per_page: 50,
     })
 
-    const merged = resp.data.filter(i => !!i.merged_at)
+    const merged = resp.data.filter((i) => !!i.merged_at)
     const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
     async function check(items: ReadonlyArray<Octokit.PullsListResponseItem>): Promise<void> {
@@ -206,13 +206,15 @@ export = (app: Application) => {
 
       context.log(`Closed PR #${pr.number}`)
 
-      return checkIsClosed(context, config, repoInfo, credentials, pr.user.login, pr).then(_r => check(items.slice(1)))
+      return checkIsClosed(context, config, repoInfo, credentials, pr.user.login, pr).then((_r) =>
+        check(items.slice(1)),
+      )
     }
 
     check(merged)
   })
 
-  app.on(`*`, async context => {
+  app.on(`*`, async (context) => {
     const r = scheduledRepoInfo(context)
 
     if (!r) {
@@ -270,11 +272,11 @@ function checkIsClosed(
   author: string,
   pr: IPullRequestInfo,
 ): Promise<void> {
-  return withJiraIssue(context, repoInfo, pr, config, data => {
+  return withJiraIssue(context, repoInfo, pr, config, (data) => {
     const [issue, url] = data
     const jiraStatus = issue.fields.status.name
 
-    if (config.postMergeStatus.find(s => s == jiraStatus)) {
+    if (config.postMergeStatus.find((s) => s == jiraStatus)) {
       return Promise.resolve(
         context.log(`JIRA issue ${issue.key} for pull request #${pr.number} is now '${jiraStatus}'`),
       )
@@ -290,7 +292,7 @@ function checkIsClosed(
           issue_number: pr.number,
           body: `@${author} ${msg}. Please check it.`,
         })
-        .then(_r => Promise.resolve())
+        .then((_r) => Promise.resolve())
     }
   })
 }
@@ -318,7 +320,7 @@ async function mainHandler(context: Context, pr: IPullRequestInfo): Promise<void
   const repo = context.repo({})
   const config = await c.getConfig(context, repo, pr.base.ref)
 
-  return withJiraIssue(context, repo, pr, config, async data => {
+  return withJiraIssue(context, repo, pr, config, async (data) => {
     const [issue, url] = data
 
     checkMilestone(context, repo, config, pr, issue, url)
@@ -345,7 +347,7 @@ async function checkMilestone(
 
   context.log.debug('Issue fixVersions', issue.fields.fixVersions)
 
-  const found = issue.fields.fixVersions.findIndex(v => {
+  const found = issue.fields.fixVersions.findIndex((v) => {
     const vm = v.name.match(config.fixVersionRegex)
 
     if (!vm || vm.length < 2) {
@@ -369,7 +371,7 @@ async function checkMilestone(
     )
   } else {
     const details =
-      issue.fields.fixVersions.length == 0 ? '<none>' : issue.fields.fixVersions.map(v => v.name).join(', ')
+      issue.fields.fixVersions.length == 0 ? '<none>' : issue.fields.fixVersions.map((v) => v.name).join(', ')
 
     context.log(
       `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${milestone.title}' of pull request #${pr.number}: ${details}`,
@@ -463,7 +465,7 @@ function toggleState(
   msg: string,
   url: Option<string>,
 ): Promise<void> {
-  return getCommitStatus(bot, repo, sha, statusContext).then(st => {
+  return getCommitStatus(bot, repo, sha, statusContext).then((st) => {
     const mustSet =
       expectedState == 'success'
         ? isSuccessful(st)
@@ -484,7 +486,7 @@ function toggleState(
             target_url: toUndefined(url),
           }),
         )
-        .then(_r => Promise.resolve())
+        .then((_r) => Promise.resolve())
     }
   })
 }
@@ -495,8 +497,8 @@ function getCommitStatus(
   ref: string,
   ctx: string,
 ): Promise<Option<Octokit.ReposListStatusesForRefResponseItem>> {
-  return bot.github.repos.listStatusesForRef({ ...repo, ref }).then(resp => {
-    const found = resp.data.find(s => s.context == ctx)
+  return bot.github.repos.listStatusesForRef({ ...repo, ref }).then((resp) => {
+    const found = resp.data.find((s) => s.context == ctx)
 
     if (!found) {
       return Promise.resolve(none)
