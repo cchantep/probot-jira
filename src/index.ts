@@ -1,5 +1,6 @@
-import { exists, none, some, fromNullable, toUndefined, Option } from 'fp-ts/lib/Option'
+import { map, fold, exists, none, some, fromNullable, toUndefined, Option } from 'fp-ts/lib/Option'
 import * as either from 'fp-ts/lib/Either'
+import { pipe } from 'fp-ts/lib/pipeable'
 
 import * as t from 'io-ts'
 
@@ -386,6 +387,18 @@ async function checkMilestone(
   }
 }
 
+function runUrl(pr: IPullRequestInfo): Option<string> {
+  return pipe(
+    fromNullable(process.env['GITHUB_RUN_ID']),
+    map((id) => {
+      const i = pr.html_url.indexOf('/pull/')
+      const repoUrl = pr.html_url.substring(0, i)
+
+      return `${repoUrl}/actions/runs/${id}`
+    }),
+  )
+}
+
 async function withJiraIssue(
   context: Context,
   repoInfo: RepoRef,
@@ -401,8 +414,9 @@ async function withJiraIssue(
     (err: Error) => {
       const msg = err.message
 
-      return context.log(`Pull request #${pr.number} ${msg}`)
+      return context.log(`Cannot parse JIRA issue key for pull request #${pr.number}: ${msg}`)
 
+      // TODO: Add a setting to request to raise error in this case
       //return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'success', msg, none)
     },
     async (k: string) => {
@@ -412,17 +426,20 @@ async function withJiraIssue(
 
       context.log.debug('Credentials', credentials)
 
-      const jiraIssue: either.Either<string, IIssue> = await j.getIssue(credentials, k).then((res: Option<IIssue>) => {
-        return either.fromOption(() => `No JIRA issue '${k}'`)(res)
-      })
+      const jiraIssue: either.Either<string, IIssue> = await j.getIssue(credentials, k).then(
+        (res: Option<IIssue>) => {
+          return either.fromOption(() => `No JIRA issue '${k}'`)(res)
+        },
+        (err) => either.left(err.message),
+      )
 
       context.log.debug('jiraIssue', jiraIssue)
 
       return either.fold(
         (msg: string) => {
-          context.log(`${msg} corresponding to pull request #${pr.number}`)
+          context.log(`Fails to get JIRA issue ${k} for pull request #${pr.number} (check JIRA connectivity): ${msg}`)
 
-          return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'error', msg, none)
+          return toggleState(context, repoInfo, StatusContext, pr.head.sha, 'error', msg, runUrl(pr))
         },
         (issue: IIssue) => {
           const issueUrl = `https://${credentials.domain}/browse/${issue.key}`
@@ -469,9 +486,18 @@ function toggleState(
     const mustSet =
       expectedState == 'success'
         ? isSuccessful(st)
-        : !exists((s: Octokit.ReposListStatusesForRefResponseItem) => s.state == expectedState && s.description == msg)(
-            st,
-          )
+        : !exists(
+            (s: Octokit.ReposListStatusesForRefResponseItem) =>
+              s.state == expectedState &&
+              s.description == msg &&
+              pipe(
+                url,
+                fold(
+                  () => s.target_url == null,
+                  (u) => u == s.target_url,
+                ),
+              ),
+          )(st)
 
     if (!mustSet) {
       return Promise.resolve()
