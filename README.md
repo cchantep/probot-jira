@@ -22,6 +22,7 @@ on:
     types: ['milestoned', 'demilestoned']
   pull_request:
     types: ['opened', 'edited', 'synchronize', 'reopened', 'closed']
+  repository_dispatch:
   schedule:
     - cron: '5 * * * *'
 
@@ -84,7 +85,17 @@ On each repository for which the application is installed, a file named [`.githu
 - `fixVersionRegex`: Regular expression to capture (with the first group) the milestone from a JIRA fix version.
 - `postMergeStatus`: One or more JIRA status names (as displayed in the JIRA UI), that are expected for an JIRA issue corresponding to a merged pull request.
 
-This configuration is considered per each base branch. 
+This configuration is considered per each base branch.
+
+A hook is added on JIRA to update Pull request statuses on issue changes.
+This is done using GitHub [`repository_dispatch`](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#repository_dispatch) with a small Web proxy, transform JIRA events to GitHub events without any store or state.
+The default instance of this proxy is https://pr-jira-gh.herokuapp.com; You can deploy your own instance (see [sources](https://github.com/cchantep/probot-jira/tree/gh-redispatch)) and specify its url in configuration as below.
+
+```json
+{
+  githubDispatchBaseUrl": "https://pr-jira-gh.herokuapp.com"
+}
+```
 
 ## Build
 

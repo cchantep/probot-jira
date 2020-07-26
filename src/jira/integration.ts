@@ -23,6 +23,7 @@ type EventContext = {
   repo: InstallRepo
   github: GitHubAPI
   log: LoggerWithTarget
+  githubDispatchBaseUrl: string
 }
 
 export async function ensureHook(ctx: EventContext): Promise<InstallRepo> {
@@ -60,7 +61,7 @@ export async function ensureHook(ctx: EventContext): Promise<InstallRepo> {
 
   // ---
 
-  const webhookUrl = `https://gh-redispatch.herokuapp.com/jira/${repoInfo.owner}/${repoInfo.repo}?user=${ghUser}&pass=${ghTok}`
+  const webhookUrl = `${ctx.githubDispatchBaseUrl}/jira/${repoInfo.owner}/${repoInfo.repo}?user=${ghUser}&pass=${ghTok}`
 
   const newHook: IHookSettings = {
     name,

@@ -25,6 +25,7 @@ export const Config = t.exact(
     issueKeyRegex: t.string,
     fixVersionRegex: t.string,
     postMergeStatus: t.array(t.string),
+    githubDispatchBaseUrl: t.union([t.string, t.undefined]),
   }),
 )
 
