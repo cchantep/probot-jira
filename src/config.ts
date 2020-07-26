@@ -23,6 +23,7 @@ import dc from './resources/pr-jira.json'
 export const Config = t.exact(
   t.type({
     issueKeyRegex: t.string,
+    milestoneRegex: t.union([t.string, t.undefined]),
     fixVersionRegex: t.string,
     postMergeStatus: t.array(t.string),
     githubDispatchBaseUrl: t.union([t.string, t.undefined]),

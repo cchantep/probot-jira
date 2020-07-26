@@ -360,7 +360,22 @@ async function checkMilestone(
 
   // ---
 
-  const milestone = pr.milestone
+  const re = config.milestoneRegex || '^(.+)$'
+  const minfo = pr.milestone.title.match(re)
+
+  if (!minfo || minfo.length < 2) {
+    const msg = `Milestone ${pr.milestone.title} doesn't match ${re}`
+
+    console.log(msg)
+
+    return toggleState(context, repo, StatusContext, pr.head.sha, 'error', msg, none)
+  }
+
+  // ---
+
+  const milestone = minfo[1]
+
+  context.log(`Checking normalized milestone ${milestone} (${pr.milestone.title}) ...`)
 
   context.log.debug('Issue fixVersions', issue.fields.fixVersions)
 
@@ -372,7 +387,7 @@ async function checkMilestone(
 
       return false
     } else {
-      return vm[1] == milestone.title
+      return vm[1] == milestone
     }
   })
 
@@ -391,10 +406,10 @@ async function checkMilestone(
       issue.fields.fixVersions.length == 0 ? '<none>' : issue.fields.fixVersions.map((v) => v.name).join(', ')
 
     context.log(
-      `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${milestone.title}' of pull request #${pr.number}: ${details}`,
+      `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${pr.milestone.title}' of pull request #${pr.number}: ${details}`,
     )
 
-    const description = `Milestone ${milestone.title} doesn't match ${issue.key} fixVersion ${details}: ${config.fixVersionRegex}`.substring(
+    const description = `Milestone ${pr.milestone.title} doesn't match ${issue.key} fixVersion ${details}: ${config.fixVersionRegex}`.substring(
       0,
       140,
     )

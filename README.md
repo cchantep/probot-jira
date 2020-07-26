@@ -76,12 +76,14 @@ On each repository for which the application is installed, a file named [`.githu
 ```json
 {
   "issueKeyRegex": "^\\[([^\\[^\\]]+)\\].*$",
+  "milestoneRegex": "^(.+)$",
   "fixVersionRegex": "^(.+)$",
   "postMergeStatus": [ "Done" ]
 }
 ```
 
 - `issueKeyRegex`: Regular expression to check whether the title of pull request matches a JIRA issue. One capture group is expected, to extract the issue key from corresponding pull request.
+- `milestoneRegex`: Optional regular expression to normalize GitHub milestone before comparision with JIRA fix version (with first group captured).
 - `fixVersionRegex`: Regular expression to capture (with the first group) the milestone from a JIRA fix version.
 - `postMergeStatus`: One or more JIRA status names (as displayed in the JIRA UI), that are expected for an JIRA issue corresponding to a merged pull request.
 

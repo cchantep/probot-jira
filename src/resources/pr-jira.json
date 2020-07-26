@@ -1,5 +1,6 @@
 {
   "issueKeyRegex": "^\\[([^\\[^\\]]+)\\].*$",
+  "milestoneRegex": "^(.+)$",
   "fixVersionRegex": "^(.+)$",
   "postMergeStatus": [ "Done" ],
   "githubDispatchBaseUrl": "https://pr-jira-gh.herokuapp.com"
