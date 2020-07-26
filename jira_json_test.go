@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"testing"
 	"github.com/google/go-cmp/cmp"
+	"testing"
 )
 
 func TestUnmarshalJiraIssueCallback(t *testing.T) {
@@ -15,10 +15,10 @@ func TestUnmarshalJiraIssueCallback(t *testing.T) {
     }
   }`
 
-	expected := JiraIssueCallbackPayload {
-		Timestamp: 123456789,
+	expected := JiraIssueCallbackPayload{
+		Timestamp:    123456789,
 		WebhookEvent: "foo",
-		Issue: JiraIssueCallbackRef {
+		Issue: JiraIssueCallbackRef{
 			Id: "i",
 		},
 	}

@@ -1,14 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
-	"os"
 	"io"
 	"io/ioutil"
-	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -18,16 +18,16 @@ func main() {
 	log.Printf("Starting on port %s", port)
 
 	http.HandleFunc("/jira/", jira)
-	
-	log.Fatal(http.ListenAndServe(":" + port, nil))
+
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 // --- JIRA
 
 type JiraIssueCallbackPayload struct {
-	Timestamp int64
+	Timestamp    int64
 	WebhookEvent string
-	Issue JiraIssueCallbackRef
+	Issue        JiraIssueCallbackRef
 }
 
 type JiraIssueCallbackRef struct {
@@ -81,7 +81,7 @@ func jira(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-        //log.Printf("JIRA payload: %s", body)
+	//log.Printf("JIRA payload: %s", body)
 
 	var issue JiraIssueCallbackPayload
 	err = json.Unmarshal(body, &issue)
