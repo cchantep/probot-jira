@@ -93,7 +93,7 @@ The default instance of this proxy is https://pr-jira-gh.herokuapp.com; You can 
 
 ```json
 {
-  githubDispatchBaseUrl": "https://pr-jira-gh.herokuapp.com"
+  "githubDispatchBaseUrl": "https://pr-jira-gh.herokuapp.com"
 }
 ```
 
