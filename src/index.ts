@@ -114,7 +114,7 @@ export = (app: Application) => {
       return
     }
 
-    // TODO: check whether jiraIssue is closed
+    // TODO: check whether jiraIssue is closed?
 
     // ---
 
@@ -228,10 +228,26 @@ export = (app: Application) => {
 
     context.log.debug('Checking JIRA hook', { repo: repoInfo })
 
-    jira.ensureHook({
-      repo: repoInfo,
-      github: context.github,
-      log: context.log,
+    const p = context.payload
+
+    const branch =
+      p['pull_request'] && p.pull_request && p.pull_request['head']
+        ? p.pull_request.head.ref
+        : p['repository']
+        ? p.repository.default_branch
+        : null
+
+    const cfg = branch ? c.getConfig(context, repoInfo, branch) : c.getConfig(context, repoInfo, 'master')
+
+    cfg.then((config) => {
+      const baseUrl = config.githubDispatchBaseUrl || 'https://pr-jira-gh.herokuapp.com'
+
+      return jira.ensureHook({
+        repo: repoInfo,
+        github: context.github,
+        log: context.log,
+        githubDispatchBaseUrl: baseUrl,
+      })
     })
   })
 }
@@ -378,7 +394,7 @@ async function checkMilestone(
       `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${milestone.title}' of pull request #${pr.number}: ${details}`,
     )
 
-    const description = `Milestone doesn't correspond to JIRA fixVersions for ${issue.key}: ${details}`.substring(
+    const description = `Milestone ${milestone.title} doesn't match ${issue.key} fixVersion ${details}: ${config.fixVersionRegex}`.substring(
       0,
       140,
     )
