@@ -1,0 +1,9 @@
+{
+  "name": "GitHub redispatch",
+  "description": "Forward dispatch event to GitHub repository",
+  "keywords": [
+    "go",
+  ],
+  "website": "http://github.com",
+  "repository": "http://github.com"
+}
