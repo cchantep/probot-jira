@@ -61,7 +61,7 @@ export = (app: Application) => {
       })
       .then((resp) => fromEither(PullRequestInfo.decode(resp.data)))
 
-    const config = await c.getConfig(context, repoInfo, pr.base.ref)
+    const config = await c.getConfig(context, repoInfo, pr.head.ref)
     const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
 
     return checkIsClosed(context, config, repoInfo, credentials, event.user.login, pr)
@@ -80,7 +80,7 @@ export = (app: Application) => {
       context.log(`Demilestoning pull request #${pr.number}`)
 
       const repo = context.repo({})
-      const config = await c.getConfig(context, repo, pr.base.ref)
+      const config = await c.getConfig(context, repo, pr.head.ref)
 
       return withJiraIssue(context, repo, pr, config, (data) => {
         const [issue, url] = data
@@ -127,7 +127,6 @@ export = (app: Application) => {
       state: 'open',
     })
 
-    // TODO: config
     async function find(
       items: ReadonlyArray<Octokit.PullsListResponseItem>,
     ): Promise<[IPullRequestInfo, c.IConfig] | undefined> {
@@ -139,7 +138,7 @@ export = (app: Application) => {
 
       const pr = items[0]
 
-      const config = await c.getConfig(context, repoInfo, pr.base.ref)
+      const config = await c.getConfig(context, repoInfo, pr.head.ref)
       const issueKey = jiraIssueKey(context, config, pr)
 
       context.log.debug(`Check pull request #${pr.number} against issue ${jiraIssueId}`, issueKey)
@@ -203,7 +202,7 @@ export = (app: Application) => {
       // ---
 
       const pr = await fromEither(PullRequestInfo.decode(items[0]))
-      const config = await c.getConfig(context, repoInfo, pr.base.ref)
+      const config = await c.getConfig(context, repoInfo, pr.head.ref)
 
       context.log(`Closed PR #${pr.number}`)
 
@@ -335,7 +334,7 @@ async function withIssuePR(context: Context, f: (pr: IPullRequestInfo) => Promis
 
 async function mainHandler(context: Context, pr: IPullRequestInfo): Promise<void> {
   const repo = context.repo({})
-  const config = await c.getConfig(context, repo, pr.base.ref)
+  const config = await c.getConfig(context, repo, pr.head.ref)
 
   return withJiraIssue(context, repo, pr, config, async (data) => {
     const [issue, url] = data
@@ -363,10 +362,12 @@ async function checkMilestone(
   const re = config.milestoneRegex || '^(.+)$'
   const minfo = pr.milestone.title.match(re)
 
+  context.log.debug(`milestoneRegex = ${re}`)
+
   if (!minfo || minfo.length < 2) {
     const msg = `Milestone ${pr.milestone.title} doesn't match ${re}`
 
-    console.log(msg)
+    context.log(msg)
 
     return toggleState(context, repo, StatusContext, pr.head.sha, 'error', msg, none)
   }
@@ -375,7 +376,7 @@ async function checkMilestone(
 
   const milestone = minfo[1]
 
-  context.log(`Checking normalized milestone ${milestone} (${pr.milestone.title}) ...`)
+  context.log(`Checking normalized milestone '${milestone}' (${pr.milestone.title}) ...`)
 
   context.log.debug('Issue fixVersions', issue.fields.fixVersions)
 
@@ -383,10 +384,12 @@ async function checkMilestone(
     const vm = v.name.match(config.fixVersionRegex)
 
     if (!vm || vm.length < 2) {
-      context.log(`Fix version ${v.name} doesn't match: ${config.fixVersionRegex}`)
+      context.log(`Fix version '${v.name}' doesn't match: ${config.fixVersionRegex}`)
 
       return false
     } else {
+      context.log.debug(`Normalized fixVersion = ${JSON.stringify(vm)}`)
+      
       return vm[1] == milestone
     }
   })
@@ -409,7 +412,7 @@ async function checkMilestone(
       `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${pr.milestone.title}' of pull request #${pr.number}: ${details}`,
     )
 
-    const description = `Milestone ${pr.milestone.title} doesn't match ${issue.key} fixVersion ${details}: ${config.fixVersionRegex}`.substring(
+    const description = `Milestone '${pr.milestone.title}' doesn't match '${issue.key}' fixVersion ${details}: ${config.fixVersionRegex}`.substring(
       0,
       140,
     )

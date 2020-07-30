@@ -12,7 +12,7 @@ import { GetContentResponse, IGetContentResponse } from './model/content'
 
 function getContent(bot: Context, repo: RepoRef, path: string, ref: string): Promise<IGetContentResponse> {
   return bot.github.repos
-    .getContents({ ...repo, path })
+    .getContents({ ...repo, path, ref })
     .then((payload) => util.fromEither(GetContentResponse.decode(payload)))
 }
 
