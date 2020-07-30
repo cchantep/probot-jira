@@ -389,7 +389,7 @@ async function checkMilestone(
       return false
     } else {
       context.log.debug(`Normalized fixVersion = ${JSON.stringify(vm)}`)
-      
+
       return vm[1] == milestone
     }
   })
