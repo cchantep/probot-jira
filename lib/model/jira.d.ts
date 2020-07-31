@@ -13,6 +13,7 @@ export declare const Issue: t.ExactC<t.TypeC<{
         }>>, t.UndefinedC, t.NullC]>;
         status: t.ExactC<t.TypeC<{
             name: t.StringC;
+            untranslatedName: t.StringC;
         }>>;
         summary: t.StringC;
         description: t.UnionC<[t.StringC, t.UndefinedC, t.NullC]>;

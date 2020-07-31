@@ -1,6 +1,6 @@
 {
   "name": "pr-jira",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Probot app that check consistency between pull requests and JIRA issues",
   "author": "Cédric Chantepie (https://github.com/cchantep)",
   "license": "ISC",
@@ -29,19 +29,19 @@
     "axios": "^0.19.2"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.7",
-    "@types/node": "^14.0.25",
+    "@types/jest": "^26.0.8",
+    "@types/node": "^14.0.27",
     "eslint-plugin-typescript": "^0.14.0",
     "jest": "^25.5.4",
     "nodemon": "^2.0.4",
-    "nock": "^13.0.2",
+    "nock": "^13.0.3",
     "@types/nock": "^11.1.0",
     "smee-client": "^1.0.2",
     "ts-jest": "^25.5.1",
     "typescript": "^3.9.7",
     "typescript-eslint-parser": "^22.0.0",
     "prettier": "2.0.5",
-    "jest-junit": "11.0.1"
+    "jest-junit": "11.1.0"
   },
   "engines": {
     "node": ">= 8.3.0"
