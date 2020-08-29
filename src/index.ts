@@ -290,15 +290,16 @@ function checkIsClosed(
 ): Promise<void> {
   return withJiraIssue(context, repoInfo, pr, config, (data) => {
     const [issue, url] = data
-    const jiraStatus = issue.fields.status.name
+    const jstatus1 = issue.fields.status.name
+    const jstatus2 = issue.fields.status.untranslatedName
 
-    if (config.postMergeStatus.find((s) => s == jiraStatus)) {
+    if (config.postMergeStatus.find((s) => (s == jstatus1 || s == jstatus2))) {
       return Promise.resolve(
-        context.log(`JIRA issue ${issue.key} for pull request #${pr.number} is now '${jiraStatus}'`),
+        context.log(`JIRA issue ${issue.key} for pull request #${pr.number} is now ['${jstatus1}', '${jstatus2}']`),
       )
     } else {
       const details = config.postMergeStatus.join(', ')
-      const msg = `JIRA issue [${issue.key}](${url}) doesn't seem to have a valid status: '${jiraStatus}' !~ [${details}]`
+      const msg = `JIRA issue [${issue.key}](${url}) doesn't seem to have a valid status: ['${jstatus1}', '${jstatus2}'] !~ [${details}]`
 
       context.log(`${msg} (pull request #${pr.number})`)
 

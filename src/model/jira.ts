@@ -7,7 +7,8 @@ const Version = t.exact(t.type({
 }))
 
 const IssueStatus = t.exact(t.type({
-  name: t.string
+  name: t.string,
+  untranslatedName: t.string
 }))
 
 const IssueResolution = t.exact(t.type({
