@@ -293,7 +293,7 @@ function checkIsClosed(
     const jstatus1 = issue.fields.status.name
     const jstatus2 = issue.fields.status.untranslatedName
 
-    if (config.postMergeStatus.find((s) => (s == jstatus1 || s == jstatus2))) {
+    if (config.postMergeStatus.find((s) => s == jstatus1 || s == jstatus2)) {
       return Promise.resolve(
         context.log(`JIRA issue ${issue.key} for pull request #${pr.number} is now ['${jstatus1}', '${jstatus2}']`),
       )
