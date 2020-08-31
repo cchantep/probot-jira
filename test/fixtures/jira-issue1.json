@@ -166,6 +166,7 @@
       "description": "This status is managed internally by Jira Software",
       "iconUrl": "https://foo.atlassian.net/",
       "name": "Prêt à livrer (MERGED)",
+      "untranslatedName": "MERGED",
       "id": "12278",
       "statusCategory": {
         "self": "https://foo.atlassian.net/rest/api/2/statuscategory/4",

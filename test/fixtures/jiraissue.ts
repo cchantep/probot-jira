@@ -11,7 +11,10 @@ export const issue1: IIssue = {
       },
     ],
     resolution: { name: 'Done' },
-    status: { name: 'Prêt à livrer (MERGED)' },
+    status: {
+      name: 'Prêt à livrer (MERGED)',
+      untranslatedName: 'MERGED'
+    },
     summary: 'Harmonisation CTAs on mobile',
   },
   key: 'PRJ-2179',
@@ -29,7 +32,10 @@ export const issue2: IIssue = {
       },
     ],
     resolution: { name: 'Done' },
-    status: { name: 'Prêt à livrer (MERGED)' },
+    status: {
+      name: 'Prêt à livrer (MERGED)',
+      untranslatedName: 'MERGED'
+    },
     summary: 'Harmonisation CTAs on mobile',
   },
   key: 'PRJ-2179',
@@ -47,7 +53,10 @@ export const issue3: IIssue = {
       },
     ],
     resolution: null, // !!
-    status: { name: 'Prêt à livrer (MERGED)' },
+    status: {
+      name: 'Prêt à livrer (MERGED)',
+      untranslatedName: 'MERGED'
+    },
     summary: 'Harmonisation CTAs on mobile',
   },
   key: 'PRJ-2179',
@@ -65,7 +74,10 @@ export const issue4: IIssue = {
       },
     ],
     resolution: { name: 'Done' },
-    status: { name: 'Prêt à livrer (MERGED)' },
+    status: {
+      name: 'Prêt à livrer (MERGED)',
+      untranslatedName: 'MERGED'
+    },
     summary: 'Harmonisation CTAs on mobile',
   },
   key: 'PRJ-2179',
@@ -83,7 +95,10 @@ export const issue5: IIssue = {
       },
     ],
     resolution: { name: 'Done' },
-    status: { name: 'DONE' },
+    status: {
+      name: 'DONE',
+      untranslatedName: 'DONE'
+    },
     summary: 'HOTFIX - Affichage de la date édition pour un Article',
   },
   key: 'PRJ-2042',
