@@ -15,9 +15,14 @@ import * as j from './jira/client'
 import { IIssue } from './model/jira'
 import { CommitState, PullRequestEvent, PullRequestInfo, IPullRequestInfo, RepoRef } from './model/pullrequest'
 
-import { Octokit } from '@octokit/rest'
-
 const StatusContext = 'pr-jira'
+
+type StatusInfo = {
+  state: string
+  description: string
+  target_url: string
+  context: string
+}
 
 const IssueInfo = t.exact(
   t.type({
@@ -127,9 +132,7 @@ export = (app: Application) => {
       state: 'open',
     })
 
-    async function find(
-      items: ReadonlyArray<Octokit.PullsListResponseItem>,
-    ): Promise<[IPullRequestInfo, c.IConfig] | undefined> {
+    async function find(items: ReadonlyArray<IPullRequestInfo>): Promise<[IPullRequestInfo, c.IConfig] | undefined> {
       if (items.length < 1) {
         return Promise.resolve(undefined)
       }
@@ -170,50 +173,6 @@ export = (app: Application) => {
     checkMilestone(context, repoInfo, config, prInfo, issue, issueUrl)
   })
 
-  app.on('schedule', async (context) => {
-    const r = scheduledRepoInfo(context)
-
-    if (!r) {
-      return context.log.error('Cannot perform period check without repository')
-    }
-
-    // ---
-
-    const repoInfo: RepoRef = r
-
-    context.log('Periodic check', repoInfo)
-
-    const resp = await context.github.pulls.list({
-      ...repoInfo,
-      state: 'closed',
-      sort: 'updated',
-      direction: 'desc',
-      per_page: 50,
-    })
-
-    const merged = resp.data.filter((i) => !!i.merged_at)
-    const credentials = await jira.credentials(repoInfo.owner, repoInfo.repo)
-
-    async function check(items: ReadonlyArray<Octokit.PullsListResponseItem>): Promise<void> {
-      if (items.length == 0) {
-        return context.log.debug('End periodic check', repoInfo)
-      }
-
-      // ---
-
-      const pr = await fromEither(PullRequestInfo.decode(items[0]))
-      const config = await c.getConfig(context, repoInfo, pr.head.ref)
-
-      context.log(`Closed PR #${pr.number}`)
-
-      return checkIsClosed(context, config, repoInfo, credentials, pr.user.login, pr).then((_r) =>
-        check(items.slice(1)),
-      )
-    }
-
-    check(merged)
-  })
-
   app.on(`*`, async (context) => {
     const r = scheduledRepoInfo(context)
 
@@ -243,7 +202,6 @@ export = (app: Application) => {
 
       return jira.ensureHook({
         repo: repoInfo,
-        github: context.github,
         log: context.log,
         githubDispatchBaseUrl: baseUrl,
       })
@@ -506,7 +464,7 @@ function jiraIssueKey(
   }
 }
 
-const isSuccessful = exists((s: Octokit.ReposListStatusesForRefResponseItem) => s.state != 'success')
+const isSuccessful = exists((s: StatusInfo) => s.state != 'success')
 
 function toggleState(
   bot: Context,
@@ -522,7 +480,7 @@ function toggleState(
       expectedState == 'success'
         ? isSuccessful(st)
         : !exists(
-            (s: Octokit.ReposListStatusesForRefResponseItem) =>
+            (s: StatusInfo) =>
               s.state == expectedState &&
               s.description == msg &&
               pipe(
@@ -552,12 +510,7 @@ function toggleState(
   })
 }
 
-function getCommitStatus(
-  bot: Context,
-  repo: RepoRef,
-  ref: string,
-  ctx: string,
-): Promise<Option<Octokit.ReposListStatusesForRefResponseItem>> {
+function getCommitStatus(bot: Context, repo: RepoRef, ref: string, ctx: string): Promise<Option<StatusInfo>> {
   return bot.github.repos.listStatusesForRef({ ...repo, ref }).then((resp) => {
     const found = resp.data.find((s) => s.context == ctx)
 
