@@ -1,9 +1,6 @@
-import { Application, Context } from 'probot'
+import { Application, Context, Logger } from 'probot'
 
-import { GitHubAPI } from 'probot/lib/github'
-import { LoggerWithTarget } from 'probot/lib/wrap-logger'
-
-import { createWebhookProxy } from 'probot/lib/webhook-proxy'
+import { createWebhookProxy } from 'probot/lib/helpers/webhook-proxy'
 
 import { fromEither } from '../util'
 
@@ -14,15 +11,13 @@ type InstallRepo = { owner: string; repo: string }
 
 type InstallContext = {
   id: string
-  logger: LoggerWithTarget
-  github: GitHubAPI
+  logger: Logger
   webhookUrl: string
 }
 
 type EventContext = {
   repo: InstallRepo
-  github: GitHubAPI
-  log: LoggerWithTarget
+  log: Logger
   githubDispatchBaseUrl: string
 }
 
@@ -37,7 +32,7 @@ export async function ensureHook(ctx: EventContext): Promise<InstallRepo> {
   const appHook = hooks.find(h => h.name == name)
 
   if (!!appHook) {
-    logger(`JIRA hook already exists for ${prefix}`)
+    logger.info(`JIRA hook already exists for ${prefix}`)
     return Promise.resolve(ctx.repo)
   }
 
@@ -73,7 +68,7 @@ export async function ensureHook(ctx: EventContext): Promise<InstallRepo> {
     },
   }
 
-  logger('Registering new JIRA hook ...', { ...newHook, url: '***' })
+  logger.info('Registering new JIRA hook ...', { ...newHook, url: '***' })
 
   return j.registerHook(creds, newHook).then(_r => ctx.repo)
 }
