@@ -1,4 +1,4 @@
-import { Application, Context, Logger } from 'probot'
+import { Context, Logger } from 'probot'
 
 import { createWebhookProxy } from 'probot/lib/helpers/webhook-proxy'
 

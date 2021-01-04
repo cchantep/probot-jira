@@ -18,16 +18,14 @@ const BranchInfo = t.exact(
   }),
 )
 
-export const Label = t.exact(
-  t.type({
-    name: t.string,
-  }),
-)
+export const Label = t.partial({
+  name: t.union([ t.string, t.undefined ]),
+})
 
 const MilestoneInfo = t.exact(t.type({
   url: t.string,
   title: t.string,
-  description: t.string
+  description: t.union([ t.string, t.null ]),
 }))
 
 export const PullRequestInfo = t.exact(
@@ -36,7 +34,7 @@ export const PullRequestInfo = t.exact(
     html_url: t.string, // TODO: url
     state: t.string, // TODO: enum
     title: t.string,
-    user: UserInfo,
+    user: t.union([ UserInfo, t.null ]),
     base: BranchInfo,
     head: BranchInfo,
     labels: t.array(Label),
