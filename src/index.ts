@@ -4,7 +4,7 @@ import { pipe } from 'fp-ts/lib/pipeable'
 
 import * as t from 'io-ts'
 
-import { Application, Context } from 'probot'
+import { Context, Probot } from 'probot'
 
 import { fromEither } from './util'
 
@@ -32,7 +32,7 @@ const IssueInfo = t.exact(
   }),
 )
 
-export = (app: Application) => {
+export = (app: Probot) => {
   app.on(
     ['pull_request.opened', 'pull_request.edited', 'pull_request.synchronize', 'pull_request.reopened'],
     async (context) => {
@@ -59,7 +59,7 @@ export = (app: Application) => {
     context.log(`Pull request #${prNumber} is merged at ${event.merged_at}`)
 
     const repoInfo = context.repo({})
-    const pr = await context.github.pulls
+    const pr = await context.octokit.pulls
       .get({
         ...repoInfo,
         pull_number: prNumber,
@@ -127,7 +127,7 @@ export = (app: Application) => {
 
     context.log.debug('JIRA issue', issue)
 
-    const resp = await context.github.pulls.list({
+    const resp = await context.octokit.pulls.list({
       ...repoInfo,
       state: 'open',
     })
@@ -261,7 +261,7 @@ function checkIsClosed(
 
       context.log(`${msg} (pull request #${pr.number})`)
 
-      return context.github.issues
+      return context.octokit.issues
         .createComment({
           ...repoInfo,
           issue_number: pr.number,
@@ -281,7 +281,7 @@ async function withIssuePR(context: Context, f: (pr: IPullRequestInfo) => Promis
   if (!event.pull_request) {
     context.log(`Not a pull request issue: #${event.id}`)
   } else {
-    const resp = await context.github.pulls.get(
+    const resp = await context.octokit.pulls.get(
       context.repo({
         pull_number: issue.number,
       }),
@@ -495,8 +495,8 @@ function toggleState(
     if (!mustSet) {
       return Promise.resolve()
     } else {
-      return bot.github.repos
-        .createStatus(
+      return bot.octokit.repos
+        .createCommitStatus(
           bot.repo({
             sha: sha,
             context: statusContext,
@@ -511,7 +511,7 @@ function toggleState(
 }
 
 function getCommitStatus(bot: Context, repo: RepoRef, ref: string, ctx: string): Promise<Option<StatusInfo>> {
-  return bot.github.repos.listStatusesForRef({ ...repo, ref }).then((resp) => {
+  return bot.octokit.repos.listCommitStatusesForRef({ ...repo, ref }).then((resp) => {
     const found = resp.data.find((s) => s.context == ctx)
 
     if (!found) {
