@@ -371,10 +371,11 @@ async function checkMilestone(
       `No JIRA fixVersion for issue '${issue.key}' is matching the milestone '${pr.milestone.title}' of pull request #${pr.number}: ${details}`,
     )
 
-    const description = `Milestone '${pr.milestone.title}' doesn't match '${issue.key}' fixVersion ${details}: ${config.fixVersionRegex}`.substring(
-      0,
-      140,
-    )
+    const description =
+      `Milestone '${pr.milestone.title}' doesn't match '${issue.key}' fixVersion ${details}: ${config.fixVersionRegex}`.substring(
+        0,
+        140,
+      )
 
     return toggleState(context, repo, StatusContext, pr.head.sha, 'error', description, some(issueUrl))
   }
