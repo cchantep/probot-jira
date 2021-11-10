@@ -33,7 +33,7 @@
     "@types/node": "^16.11.7",
     "eslint-plugin-typescript": "^0.14.0",
     "jest": "^25.5.4",
-    "nodemon": "^2.0.14",
+    "nodemon": "^2.0.15",
     "nock": "^13.2.0",
     "@types/nock": "^11.1.0",
     "smee-client": "^1.2.2",
