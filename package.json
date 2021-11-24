@@ -29,7 +29,7 @@
     "axios": "^0.24.0"
   },
   "devDependencies": {
-    "@types/jest": "^27.0.2",
+    "@types/jest": "^27.0.3",
     "@types/node": "^16.11.7",
     "eslint-plugin-typescript": "^0.14.0",
     "jest": "^25.5.4",
