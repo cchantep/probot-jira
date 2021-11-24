@@ -2,7 +2,7 @@ version: 2 # use CircleCI 2.0
 jobs:
   build: # runs not using Workflows must have a `build` job as entry point
     docker:
-      - image: circleci/node:10.20
+      - image: circleci/node:14.18
     steps:
       - checkout
 
