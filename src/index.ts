@@ -4,6 +4,8 @@ import { pipe } from 'fp-ts/lib/pipeable'
 
 import * as t from 'io-ts'
 
+import { emitterEventNames } from '@octokit/webhooks'
+import type { PullRequest, Repository } from '@octokit/webhooks-types'
 import { Context, Probot } from 'probot'
 
 import { fromEither } from './util'
@@ -173,7 +175,7 @@ export = (app: Probot) => {
     checkMilestone(context, repoInfo, config, prInfo, issue, issueUrl)
   })
 
-  app.on(`*`, async (context) => {
+  app.on([...emitterEventNames], async (context) => {
     const r = scheduledRepoInfo(context)
 
     if (!r) {
@@ -186,10 +188,21 @@ export = (app: Probot) => {
 
     context.log.debug('Checking JIRA hook', { repo: repoInfo })
 
-    const p = context.payload
+    const x: any = context.payload
+
+    if (!x['pull_request'] || !x['repository']) {
+      return
+    }
+
+    type P = {
+      pull_request: PullRequest
+      repository: Repository
+    }
+
+    const p: P = x as P
 
     const branch =
-      p['pull_request'] && p.pull_request && p.pull_request['head']
+      p.pull_request && p.pull_request['head']
         ? p.pull_request.head.ref
         : p['repository']
         ? p.repository.default_branch
@@ -273,7 +286,8 @@ function checkIsClosed(
 }
 
 async function withIssuePR(context: Context, f: (pr: IPullRequestInfo) => Promise<void>): Promise<void> {
-  const issue = context.payload.issue
+  const p: any = context.payload
+  const issue: {} = p['issue'] || {}
   const event = await fromEither(IssueInfo.decode(issue))
 
   context.log.debug('Event', event)
@@ -283,7 +297,7 @@ async function withIssuePR(context: Context, f: (pr: IPullRequestInfo) => Promis
   } else {
     const resp = await context.octokit.pulls.get(
       context.repo({
-        pull_number: issue.number,
+        pull_number: event.number,
       }),
     )
 
