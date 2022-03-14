@@ -25,7 +25,7 @@
   "dependencies": {
     "probot": "^12.2.2",
     "io-ts": "^2.2.16",
-    "fp-ts": "^2.11.8",
+    "fp-ts": "^2.11.9",
     "axios": "^0.26.1"
   },
   "devDependencies": {
