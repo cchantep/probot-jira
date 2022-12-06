@@ -26,7 +26,7 @@
     "probot": "^12.2.8",
     "io-ts": "^2.2.20",
     "fp-ts": "^2.13.1",
-    "axios": "^0.27.2"
+    "axios": "^1.2.1"
   },
   "devDependencies": {
     "@types/jest": "^29.2.4",
